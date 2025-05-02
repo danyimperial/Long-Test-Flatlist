@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, ActivityIndicator, Image, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, Image, TextInput, RefreshControl, TouchableOpacity } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import mainStyles from './MainStyle';  
+import BottomNav from './BottomNav'; 
 
 const endpoint = 'https://pk9blqxffi.execute-api.us-east-1.amazonaws.com/xdeal/Xchange';
 const initialParams = {
@@ -10,7 +13,7 @@ const initialParams = {
   "min": "",
   "search": "",
   "sort": "",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJuYmYiOjE3NDU2MjYzNTksImexpcCI6MTc0ODIxODM1OSwiaXNzIjoiWHVyMzRQMSIsImF1ZCI6Ilh1cjQ0UFAifQ.qzc-LBSyxuBd7RqMtQFovUo093KtW3p7xHaYUPe0WJ8",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJuYmYiOjE3NDYxOTI1MTQsImV4cCI6MTc0ODc4NDUxNCwiaXNzIjoiWHVyMzRQMSIsImF1ZCI6Ilh1cjQ0UFAifQ.QD-fcLXtznCfkTIYkbOQfc5fXfxYgw_mOziKWpUHddk",
   "user_type": "Xpert",
   "version_number": "2.2.6",
   "limit": 10
@@ -75,56 +78,103 @@ const App = () => {
   }, [data, loading, fetchData]);
 
   const renderItem = useCallback(({ item }) => (
-    <View style={styles.item}>
-      <View style={styles.imageContainer}>
+    <View style={mainStyles.item}>
+      <View style={mainStyles.imageContainer}>
         {item.item_image && (
           <Image
             source={{ uri: item.item_image }}
-            style={styles.image}
+            style={mainStyles.image}
             resizeMode="cover"
           />
         )}
       </View>
-      <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">{item.model || item.productName}</Text>
-      <Text style={styles.price}>${item.selling_price || item.cost}</Text>
-      <Text style={styles.category}>Category: {item.c}</Text>
-    </View>
-  ), []);
 
-  const renderItemSeries = useCallback(({ item }) => (
-    <View style={styles.item1}>
-      <View style={styles.imageContainer1}>
-        {item.item_image && (
+      <View style={mainStyles.titleCategoryRow}>
+        <Text
+          style={mainStyles.title}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {item.model}
+        </Text>
+        <Text style={mainStyles.category}>{item.category}</Text>
+      </View>
+
+
+      <Text style={mainStyles.price}>PHP {item.selling_price}</Text>
+
+      <View style={mainStyles.listerInfo}>
+        {item.lister_image && (
           <Image
-            source={{ uri: item.item_image }}
-            style={styles.image1}
+            source={{ uri: item.lister_image }}
+            style={mainStyles.listerImage}
             resizeMode="cover"
           />
         )}
+        <Text style={mainStyles.listerName}>{item.lister_name}</Text>
       </View>
     </View>
   ), []);
 
-  const renderFooter = useCallback(() => (
-    loading ? (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="blue" />
-      </View>
-    ) : null
-  ), [loading]);
-
+  const renderFooter = useCallback(() => {
+    if (loading) {
+      return (
+        <View style={mainStyles.loaderContainer}>
+          <ActivityIndicator size="large" color="blue" />
+        </View>
+      );
+    } else if (data.length > 0) {
+      return (
+        <View style={mainStyles.loadMoreButtonContainer}>
+          <Text
+            style={mainStyles.loadMoreButton}
+            onPress={handleLoadMore}
+          >
+            Load More
+          </Text>
+        </View>
+      );
+    }
+    return null;
+  }, [loading, data]);
+  
+  
+  
   const keyExtractor = useCallback((item) => item.listing_id ? item.listing_id.toString() : Math.random().toString(), []);
 
   return (
-    <View style={styles.container}>
-      {error && <Text style={styles.errorText}>Error: {error}</Text>}
-      <View style={styles.header}>
-        <Image source={require('./src/assets/pop.jpg')} style={styles.headerImage} />
-        <View style={styles.headerTextContainer}>
-          <Text style={styles.headerText}>Your Text</Text>
+    <View style={mainStyles.container}>
+      {error && <Text style={mainStyles.errorText}>Error: {error}</Text>}
+
+      <View style={mainStyles.header}>
+        <Image source={require('./src/assets/cute.png')} style={mainStyles.headerImage} />
+
+        <View style={mainStyles.overlay}>
+          <Image source={require('./src/assets/popmartlogo.png')} style={mainStyles.logo} />
+          <View style={mainStyles.bellIconContainer}>
+            <Ionicons name="notifications" size={24} color="white" style={mainStyles.bellIcon} />
+          </View>
+        </View>
+
+        <View style={mainStyles.headerTextContainer}>
+          <Text style={mainStyles.headerText}>New Release</Text>
+          <Text style={mainStyles.headerText1}>DIMOO</Text>
+
         </View>
       </View>
-      <Text style={styles.label}>Daily Discovery</Text>
+
+      <View style={mainStyles.searchBar}>
+        <Ionicons name="search" size={20} color="#000" />
+        <TextInput
+          style={mainStyles.searchInput}
+          placeholder="Search"
+        />
+      </View>
+
+      <View style={mainStyles.labelRow}>
+        <Text style={mainStyles.label}>Daily Discovery</Text>
+        <Ionicons name="filter" size={20} color="#000" />
+      </View>
       <FlatList
         data={data}
         keyExtractor={keyExtractor}
@@ -136,136 +186,21 @@ const App = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
-        style={styles.arrivalsList}
+        style={mainStyles.arrivalsList}
       />
+
+      {!loading && data.length > 0 && (
+        <TouchableOpacity
+          style={mainStyles.loadMoreButton}
+          onPress={handleLoadMore}
+        >
+          <Text style={mainStyles.loadMoreText}>Load More</Text>
+        </TouchableOpacity>
+      )}
+
+      <BottomNav />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 0, // Remove container padding to allow header to go to edges
-    backgroundColor: 'white',
-  },
-  header: {
-    width: '100%',
-    height: 250, // Adjust as needed
-    overflow: 'hidden',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    position: 'relative',
-  },
-  headerImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  headerTextContainer: {
-    position: 'absolute',
-    top: 100, // Align to the very top
-    left: 10, // 10-pixel padding from the left
-    padding: 10, // Optional padding for the text background
-    // backgroundColor: 'rgba(0, 0, 0, 0.5)', // Optional semi-transparent background
-    borderRadius: 5, // Optional text background rounded corners
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  seriesContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 20,
-    fontFamily: 'sans-serif-medium',
-    fontWeight: 'bold',
-    marginBottom: 10,
-    marginTop: 10, // Add some top margin to separate from the header
-    paddingHorizontal: 10, // Add horizontal padding for the text
-  },
-  label1: {
-    fontSize: 24,
-    fontFamily: 'sans-serif-medium',
-    marginBottom: 10,
-    paddingHorizontal: 10,
-  },
-  item: {
-    width: '50%',
-    paddingHorizontal: 5,
-    marginBottom: 10,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  imageContainer: {
-    width: '100%',
-    aspectRatio: 1,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 5,
-  },
-  image: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 3,
-    textAlign: 'left',
-    width: '100%',
-    paddingHorizontal: 10,
-  },
-  price: {
-    fontSize: 12,
-    color: '#888',
-    textAlign: 'left',
-    width: '100%',
-    paddingHorizontal: 10,
-  },
-  category: {
-    fontSize: 10,
-    color: '#555',
-    textAlign: 'left',
-    width: '100%',
-    paddingHorizontal: 10,
-  },
-  loaderContainer: {
-    paddingVertical: 20,
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  item1: {
-    flexDirection: 'row',
-    width: 120,
-  },
-  imageContainer1: {
-    width: '80%',
-    aspectRatio: 1,
-    backgroundColor: 'white',
-    borderRadius: 60,
-    overflow: 'hidden',
-    marginBottom: 5,
-  },
-  image1: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  arrivalsList: {
-    flexWrap: 'wrap',
-    paddingHorizontal: 10, // Add horizontal padding for the list items
-  },
-});
 
 export default App;
