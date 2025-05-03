@@ -25,6 +25,10 @@ const App = () => {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [params, setParams] = useState(initialParams);
+  const [searchText, setSearchText] = useState('');
+  const isFiltered = searchText.trim().length > 0;
+
+
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -60,6 +64,19 @@ const App = () => {
     fetchData();
   }, [fetchData]);
 
+
+  const handleSearch = useCallback((text) => {
+    setSearchText(text);
+  }, []);
+  
+  const submitSearch = useCallback(() => {
+    setData([]);
+    setParams({
+      ...initialParams,
+      search: searchText
+    });
+  }, [searchText]);
+
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
     setData([]);
@@ -77,66 +94,64 @@ const App = () => {
     }
   }, [data, loading, fetchData]);
 
-  const renderItem = useCallback(({ item }) => (
-    <View style={mainStyles.item}>
-      <View style={mainStyles.imageContainer}>
-        {item.item_image && (
-          <Image
-            source={{ uri: item.item_image }}
-            style={mainStyles.image}
-            resizeMode="cover"
-          />
-        )}
-      </View>
-
-      <View style={mainStyles.titleCategoryRow}>
-        <Text
-          style={mainStyles.title}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {item.model}
-        </Text>
-        <Text style={mainStyles.category}>{item.category}</Text>
-      </View>
-
-
-      <Text style={mainStyles.price}>PHP {item.selling_price}</Text>
-
-      <View style={mainStyles.listerInfo}>
-        {item.lister_image && (
-          <Image
-            source={{ uri: item.lister_image }}
-            style={mainStyles.listerImage}
-            resizeMode="cover"
-          />
-        )}
-        <Text style={mainStyles.listerName}>{item.lister_name}</Text>
-      </View>
-    </View>
-  ), []);
-
-  const renderFooter = useCallback(() => {
-    if (loading) {
-      return (
-        <View style={mainStyles.loaderContainer}>
-          <ActivityIndicator size="large" color="blue" />
+  const renderItem = useCallback(({ item }) => {
+    return (
+      <View style={mainStyles.item}>
+        <View style={isFiltered ? mainStyles.filteredImageContainer : mainStyles.imageContainer}>
+          {item.item_image && (
+            <Image
+              source={{ uri: item.item_image }}
+              style={isFiltered ? mainStyles.filteredImage : mainStyles.image}
+              resizeMode="cover"
+            />
+          )}
         </View>
-      );
-    } else if (data.length > 0) {
-      return (
-        <View style={mainStyles.loadMoreButtonContainer}>
-          <Text
-            style={mainStyles.loadMoreButton}
-            onPress={handleLoadMore}
-          >
-            Load More
+  
+        <View style={mainStyles.titleCategoryRow}>
+          <Text style={mainStyles.title} numberOfLines={1} ellipsizeMode="tail">
+            {item.model}
           </Text>
+          <Text style={mainStyles.category}>{item.category}</Text>
         </View>
-      );
-    }
-    return null;
-  }, [loading, data]);
+  
+        <Text style={mainStyles.price}>PHP {item.selling_price}</Text>
+  
+        <View style={mainStyles.listerInfo}>
+          {item.lister_image && (
+            <Image
+              source={{ uri: item.lister_image }}
+              style={mainStyles.listerImage}
+              resizeMode="cover"
+            />
+          )}
+          <Text style={mainStyles.listerName}>{item.lister_name}</Text>
+        </View>
+      </View>
+    );
+  }, [isFiltered]);
+  
+
+  // const renderFooter = useCallback(() => {
+  //   if (loading) {
+  //     return (
+  //       <View style={mainStyles.loaderContainer}>
+  //         <ActivityIndicator size="large" color="blue" />
+  //       </View>
+  //     );
+  //   } else if (data.length > 0) {
+  //     return (
+  //       <View style={mainStyles.loadMoreButtonContainer}>
+  //         <Text
+  //           style={mainStyles.loadMoreButton}
+  //           onPress={handleLoadMore}
+  //         >
+  //           Load More
+  //         </Text>
+  //       </View>
+  //     );
+  //   }
+  //   return null;
+  // }, [loading, data]);
   
   
   
@@ -164,12 +179,17 @@ const App = () => {
       </View>
 
       <View style={mainStyles.searchBar}>
-        <Ionicons name="search" size={20} color="#000" />
-        <TextInput
-          style={mainStyles.searchInput}
-          placeholder="Search"
-        />
-      </View>
+  <Ionicons name="search" size={20} color="#000" />
+  <TextInput
+    style={mainStyles.searchInput}
+    placeholder="Search"
+    value={searchText}
+    onChangeText={handleSearch}
+    onSubmitEditing={submitSearch}
+    returnKeyType="search"
+  />
+</View>
+
 
       <View style={mainStyles.labelRow}>
         <Text style={mainStyles.label}>Daily Discovery</Text>
@@ -178,10 +198,11 @@ const App = () => {
       <FlatList
         data={data}
         keyExtractor={keyExtractor}
-        renderItem={renderItem}
+        
+        renderItem={(props) => renderItem(props)}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.1}
-        ListFooterComponent={renderFooter}
+        // ListFooterComponent={renderFooter}
         numColumns={2}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
@@ -189,14 +210,14 @@ const App = () => {
         style={mainStyles.arrivalsList}
       />
 
-      {!loading && data.length > 0 && (
+      {/* {!loading && data.length > 0 && (
         <TouchableOpacity
           style={mainStyles.loadMoreButton}
           onPress={handleLoadMore}
         >
           <Text style={mainStyles.loadMoreText}>Load More</Text>
         </TouchableOpacity>
-      )}
+      )} */}
 
       <BottomNav />
     </View>

@@ -248,6 +248,25 @@ const mainStyles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+
+  filteredImageContainer: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 5,
+  },
+  
+  filteredImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  
+ 
+ 
   
 });
 
