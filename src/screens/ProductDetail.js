@@ -64,9 +64,9 @@ const ProductDetailScreen = ({ route }) => {
             />
           )}
           <View style={styles.listerInfo}>
-            <Text style={styles.listerText}>Name: {item.lister_name}</Text>
-            <Text style={styles.listerText}>Lister ID: {item.lister_id}</Text>
-            <Text style={styles.listerText}>Listing ID: {item.item_no}</Text>
+            <Text style={styles.listerText}>{item.lister_name}</Text>
+            <Text style={styles.listerText}>{item.lister_id}</Text>
+            <Text style={styles.listerText}>{item.item_no}</Text>
           </View>
         </View>
 
@@ -88,6 +88,8 @@ const ProductDetailScreen = ({ route }) => {
         <View style={styles.divider} />
 
         <DropdownSection title="Description">
+          <Text style={styles.dropdowntitle}> Registration </Text>
+ <View style={styles.divider} />
           <InfoRow label="Date" value={new Date(item.listing_date).toLocaleDateString()} />
                   <View style={styles.divider} />
 
@@ -98,6 +100,8 @@ const ProductDetailScreen = ({ route }) => {
 
         {item.role && (
           <DropdownSection title="Provenance">
+             <Text style={styles.dropdowntitle}> Certification </Text>
+ <View style={styles.divider} />
             <InfoRow label="Date" value={new Date(item.listing_date).toLocaleDateString()} />
                     <View style={styles.divider} />
 
@@ -126,7 +130,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 4 },
   category: { fontSize: 16, color: '#555', marginBottom: 4 },
-  price: { fontSize: 18, color: 'green', fontWeight: 'bold', marginBottom: 12 },
+  price: { fontSize: 18, color: '#cbb186', fontWeight: '800', marginBottom: 12 },
 
   divider: {
     height: 1,
@@ -200,6 +204,11 @@ chevronIcon: {
     maxWidth: '60%',
     textAlign: 'right',
   },
+  dropdowntitle: {
+    fontSize: 16,
+    color: 'black',
+    fontWeight: '800',
+  }
 });
 
 export default ProductDetailScreen;

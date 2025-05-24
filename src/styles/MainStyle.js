@@ -1,291 +1,396 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 
-const mainStyles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 0,
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
   },
-  overlay: {
-    position: 'absolute',
-    top: 30,
-    left: 25,
-    right: 30,
-    // REMOVED: zIndex: 10, // As requested
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    padding: 16,
   },
-
-  logo: {
-    fontSize: 50,
-    fontWeight: '800',
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
-
-  bellIconContainer: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 50,
-    padding: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  bellIcon: {
-    color: 'gray', // Assuming you want it white as per your JSX usage
-  },
-
-  header: {
-    width: '100%',
-    height: 100, // Header occupies this space
+  notificationContainer: {
+    position: 'relative',
     marginBottom: 20,
-    overflow: 'hidden',
-    borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 50,
-    position: 'relative', // Keep if headerTextContainer is absolute to it
   },
-  headerImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+  notificationIcon: {
+    width: 24,
+    height: 24,
   },
-  headerTextContainer: {
+    bellIcon: {
+    color: 'gray', 
+  },
+  notificationDot: {
     position: 'absolute',
-    // top: 115, // Commented out in your code, keeping it that way
-    left: 25,
-    padding: 10,
-    borderRadius: 5,
-  },
-  headerText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  headerText1: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
+    right: -2,
+    top: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#c4a675',
   },
   searchBar: {
-    // REMOVED: position: 'absolute',
-    // REMOVED: top: 80,
-    // REMOVED: left: 25,
-    // REMOVED: right: 10,
-    height: 48, // Keep the fixed height
-    // REMOVED: width: 350, // Will now expand with marginHorizontal
-
-    // NEW: Margins for normal flow
-    marginTop: -40, // Pulls the search bar up to overlap the header visually
-                     // (250 - 48 - 120 approx, adjust as needed)
-                     // Let's aim for the search bar to start around Y=210 (250 - 40)
-    marginHorizontal: 25, // Side spacing
-
-    backgroundColor: 'white',
+    backgroundColor: '#f5f5f5',
     borderRadius: 10,
-    borderColor: 'gray',
-    borderWidth: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    // REMOVED: zIndex: 1, // As requested
-    paddingLeft: 10,
-    paddingRight: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  searchText: {
+    color: '#999',
   },
   searchInput: {
-    flex: 1,
-    height: '100%',
-    borderRadius: 20,
-    paddingLeft: 10,
-    fontSize: 16,
-    color: '#555',
-  },
-  icon: {
-    color: '#888',
-    fontSize: 20,
-    marginRight: 10,
-  },
-
-  seriesContainer: {
-    marginBottom: 20,
-  },
-  
-  labelRow: {
-    // Ensure labelRow has position: 'relative' for absolute children to work
-    position: 'relative', // ADD THIS!
-    marginHorizontal: 10,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginHorizontal: 16,
+    marginBottom: 16,
+},
+  discoveryHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between', // Keep this as you requested
-    paddingHorizontal: 14, // Keep your current padding
-
-    marginTop: 20,
-    marginBottom: 15,
-  },
-
-
-  label: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-
-  // --- FLATLIST STYLES ---
-  arrivalsList: {
-    flex: 1, // Crucial: Makes the FlatList take up remaining vertical space
-    // REMOVED: paddingHorizontal: 10, // Move to contentContainerStyle
-  },
-  flatListContentContainer: {
-    // REMOVED: paddingTop: 183 + 15, // No longer needed for normal flow
-    paddingHorizontal: 10, // Apply horizontal padding to the content
-  },
-
-  item: {
-    width: '50%',
-    paddingHorizontal: 5,
-    marginBottom: 10,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  imageContainer: {
-    width: '100%',
-    aspectRatio: 1,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 5,
-  },
-  image: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-
-  price: {
-    fontSize: 16,
-    color: 'red',
-    fontWeight: '700',
-    textAlign: 'left',
-    width: '100%',
-  },
-
-  titleCategoryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 5,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
-
-  title: {
-    fontSize: 14,
+  discoveryText: {
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
-    flexShrink: 1,
-    flexGrow: 1,
-    marginRight: 8,
-    overflow: 'hidden',
   },
-
-  category: {
-    fontSize: 12,
-    color: '#555',
-    flexShrink: 0,
-  },
-
-  listerInfo: {
+  filterText: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 5,
-    width: '100%',
   },
-
-  listerImage: {
+  filterTextContent: {
+    color: '#c4a675',
+  },
+  filterIcon: {
     width: 16,
     height: 16,
+    marginLeft: 4,
+    tintColor: '#c4a675',
+  },
+  listContent: {
+    paddingHorizontal: 10,
+    paddingBottom: 80,
+  },
+  productContainer: {
+    flex: 1,
+    margin: 8,
+    maxWidth: Dimensions.get('window').width / 2 - 16,
+  },
+  productImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#f5f5f5',
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  productPrice: {
+    fontSize: 16,
+    color: '#d4b88d',
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  productDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  sellerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sellerImage: {
+    width: 24,
+    height: 24,
     borderRadius: 12,
     marginRight: 8,
-    backgroundColor: '#eee',
+    backgroundColor: '#e0e0e0', 
   },
-
-  listerName: {
+  sellerName: {
     fontSize: 12,
-    color: '#333',
-    textAlign: 'left',
+    color: '#666',
   },
-
-  loaderContainer: {
-    paddingVertical: 20,
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  item1: {
+  bottomNav: {
     flexDirection: 'row',
-    width: 120,
-  },
-  imageContainer1: {
-    width: '80%',
-    aspectRatio: 1,
-    backgroundColor: 'white',
-    borderRadius: 60,
-    overflow: 'hidden',
-    marginBottom: 5,
-  },
-  image1: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  arrivalsList: {
-      flex: 1, // Crucial: Makes the FlatList take up remaining vertical space
-
-    // flexWrap: 'wrap',
-    paddingHorizontal: 10,
-  },
-
-  loadMoreButtonContainer: {
-    paddingVertical: 5,
-    marginBottom: 30,
+    justifyContent: 'space-around',
     alignItems: 'center',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingVertical: 12,
+    height: 60,
+  },
+  navItem: {
+    alignItems: 'center',
+  },
+  centerNavButton: {
+    position: 'absolute',
+    bottom: 30,
+    alignSelf: 'center',
+    backgroundColor: '#d4b88d',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 1,
   },
-  loadMoreButton: {
-    backgroundColor: 'blue',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 5,
-    color: 'white',
-    fontSize: 16,
-  },
 
-  loadMoreText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
+  // skeleton css
+skeleton: {
+  backgroundColor: '#e1e1e1',
+  borderRadius: 4,
+  overflow: 'hidden',
+},
+footer: {
+  padding: 10,
+  alignItems: 'center',
+},
+errorText: {
+  color: 'red',
+  marginBottom: 10,
+  textAlign: 'center',
+},
+retryButton: {
+  backgroundColor: '#6200ee',
+  padding: 10,
+  borderRadius: 5,
+},
+retryButtonText: {
+  color: 'white',
+  fontWeight: 'bold',
+},
 
-  filteredImageContainer: {
-    width: '100%',
-    aspectRatio: 1,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 5,
-  },
+// filter css
+modalContainer: {
+  flex: 1,
+  backgroundColor: '#fff',
+  padding: 16,
+  position: 'absolute',
+  right: 0,
+  top: 0,
+  bottom: 0,
+},
+modalHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 20,
+  borderBottomWidth: 1,
+  borderBottomColor: '#eee',
+  paddingBottom: 10,
+},
+modalTitle: {
+  fontSize: 20,
+  fontWeight: 'bold',
+},
+closeButton: {
+  fontSize: 24,
+  color: '#666',
+},
+filterSection: {
+  marginBottom: 20,
+  borderBottomWidth: 1,
+  borderBottomColor: '#eee',
+  paddingBottom: 10,
+},
+sectionTitle: {
+  fontSize: 16,
+  fontWeight: 'bold',
+  marginBottom: 10,
+  color: '#333',
+},
+sortOptions: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  marginBottom: 10,
+},
+sortButton: {
+  paddingHorizontal: 16,
+  paddingVertical: 8,
+  marginRight: 10,
+  backgroundColor: '#eaeaea',
+  marginBottom: 10,
+  borderRadius: 20,
+  borderWidth: 1,
+  borderColor: '#ddd',
+},
+activeSort: {
+  backgroundColor: '#c4a675',
+  borderColor: '#c4a675',
+},
+sortText: {
+  color: '#333',
+},
+activeSortText: {
+  color: '#fff',
+},
 
-  filteredImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
+
+categoryRow: {
+  flexDirection: 'row',
+  justifyContent: 'flex-start',
+  marginBottom: 10,
+    gap: 4,
+
+},
+
+filterbutton: {
+  backgroundColor: '#e9e9e9',
+  paddingVertical: 8,
+  paddingHorizontal: 16,
+  borderRadius: 50,
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 1,
+  borderColor: 'transparent',
+  maxWidth: '100%',
+  alignSelf: 'flex-start',
+},
+
+selectedFilterButton: {
+  borderColor: '#ac895c',
+  backgroundColor: '#fff3e0',
+},
+
+filterbuttonText: {
+  fontWeight: '400',
+  textAlign: 'center',
+  flexWrap: 'wrap',
+},
+
+selectedFilterText: {
+  color: '#ac895c',
+  fontWeight: 'bold',
+},
+
+priceInputContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 10,
+},
+priceInput: {
+  flex: 1,
+  borderWidth: 1,
+  borderColor: '#ddd',
+  borderRadius: 4,
+  padding: 8,
+  marginHorizontal: 5,
+},
+priceRangeSeparator: {
+  marginHorizontal: 5,
+},
+priceRangeContainer: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  justifyContent: 'space-between',
+},
+priceRangeButton: {
+  padding: 10,
+  marginBottom: 8,
+  borderRadius: 4,
+  borderWidth: 1,
+  borderColor: '#ddd',
+  minWidth: '45%',
+  alignItems: 'center',
+},
+priceRangeText: {
+  color: '#333',
+},
+filterActions: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+  paddingTop: 10,
+  borderTopWidth: 1,
+  borderTopColor: '#eee',
+},
+clearButton: {
+  padding: 12,
+  borderRadius: 20,
+  borderWidth: 1,
+  borderColor: '#c4a675',
+  flex: 1,
+  marginRight: 10,
+  alignItems: 'center',
+},
+applyButton: {
+  padding: 12,
+  borderRadius: 20,
+  backgroundColor: '#c4a675',
+  flex: 1,
+  alignItems: 'center',
+},
+clearButtonText: {
+  color: '#c4a675',
+},
+applyButtonText: {
+  color: '#fff',
+},
+
+// css nung sa category dropdown
+
+categoryDropdownButton: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: 12,
+  borderWidth: 1,
+  borderColor: '#ddd',
+  borderRadius: 4,
+  marginBottom: 10,
+},
+categoryDropdownText: {
+  color: '#333',
+},
+dropdownIcon: {
+  width: 16,
+  height: 16,
+},
+categoryDropdownList: {
+  maxHeight: 200,
+  borderWidth: 1,
+  borderColor: '#ddd',
+  borderRadius: 4,
+  marginBottom: 10,
+},
+categoryDropdownItem: {
+  padding: 12,
+  borderBottomWidth: 1,
+  borderBottomColor: '#eee',
+},
+
+modalScrollView: {
+  flex: 1,
+},
+categoryDropdownListContainer: {
+  maxHeight: 150, // Adjust this value as needed
+  borderWidth: 1,
+  borderColor: '#ddd',
+  borderRadius: 4,
+  marginBottom: 10,
+},
+categoryDropdownScrollView: {
+  flex: 1,
+},
+
 });
-
-export default mainStyles;

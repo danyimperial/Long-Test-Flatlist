@@ -1,531 +1,726 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
-  FlatList,
-  ActivityIndicator,
   Image,
-  TextInput,
+  FlatList,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
   RefreshControl,
-  Alert, // For user-facing error messages
-  StyleSheet, // For the new placeholder styles
+  Modal,
+  ScrollView,
+  Dimensions,
+  TextInput,
 } from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {styles} from '../styles/MainStyle';
+import BottomNav from './BottomNav';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation, useRoute, DrawerActions } from '@react-navigation/native';
-
-import mainStyles from '../styles/MainStyle'; // Assuming this contains your existing styles
-import BottomNav from './BottomNav'; // Assuming this is your Bottom Navigation component
+import {Animated} from 'react-native';
 import axios from 'axios';
 
-
-const API_ENDPOINT = 'https://pk9blqxffi.execute-api.us-east-1.amazonaws.com/xdeal/Xchange';
-const INITIAL_API_PARAMS = {
-  categories: [],
-  last_listing_id: '',
-  last_row_value: '', // Keep this if your API uses it for specific pagination
-  max: '',
-  min: '',
-  search: '',
-  sort: '', // Expected to be 'price_asc', 'price_desc', or empty
+const API_ENDPOINT =
+  'https://pk9blqxffi.execute-api.us-east-1.amazonaws.com/xdeal/Xchange';
+const API_PARAMS = {
   token:
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJuYmYiOjE3NDYxOTI1MTQsImV4cCI6MTc0ODc4NDUxNCwiaXNzIjoiWHVyMzRQMSIsImF1ZCI6Ilh1cjQ0UFAifQ.QD-fcLXtznCfkTIYkbOQfc5fXfxYgw_mOziKWpUHddk',
-  user_type: 'Xpert',
   version_number: '2.2.6',
-  limit: 10,
+  user_type: 'Xpert',
+  search: '',
+  categories: [],
+  last_listing_id: '',
+  sort: '',
+  min: '',
+  max: '',
+  last_row_value: '',
 };
 
-
-
-
-
-const HomeScreen = () => {
-
-  
-  const navigation = useNavigation();
-  const route = useRoute();
-
-  const [data, setData] = useState([]);
-  const [apiParams, setApiParams] = useState(INITIAL_API_PARAMS);
-  const [searchText, setSearchText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [fetchError, setFetchError] = useState(null);
-  const [hasMoreData, setHasMoreData] = useState(true); // To track if there's more data to load
-
-const [fullData, setFullData] = useState([]);
- const [filters, setFilters] = useState({ category: '', minPrice: 0, maxPrice: Number.MAX_VALUE });
-
-
-   useEffect(() => {
-  if (route.params?.filters) {
-    const { category, minPrice, maxPrice } = route.params.filters;
-
-    setFilters({
-      category: category || '',
-      minPrice: parseFloat(minPrice) || 0,
-      maxPrice: parseFloat(maxPrice) || Number.MAX_VALUE,
-    });
-  }
-}, [route.params?.filters]);
-
-
-useEffect(() => {
-  const fetchItems = async () => {
-    try {
-      const response = await axios.get('https://your-api-endpoint.com/products');
-      console.log('API response.data:', response.data);
-      const allItems = response.data;
-      setFullData(allItems);
-    } catch (error) {
-      console.error('Fetch error:', error);
-      setFetchError(error.message || 'Failed to fetch');
-    }
-  };
-  fetchItems();
-}, []);
-
-
-useEffect(() => {
-  if (!Array.isArray(fullData)) {
-    // Defensive: if fullData is not an array, skip filtering
-    setData([]);
-    return;
-  }
-
-  const filtered = fullData.filter((item) => {
-    const price = parseFloat(item.selling_price);
-    const matchesCategory = filters.category === '' || item.category === filters.category;
-    const matchesPrice = !isNaN(price) && price >= filters.minPrice && price <= filters.maxPrice;
-    return matchesCategory && matchesPrice;
-  });
-
-  setData(filtered);
-}, [filters, fullData]);
-
-
-
-
-  // --- Data Fetching Logic ---
-  const fetchData = useCallback(
-    async (currentParams, isInitialOrRefresh = false) => {
-      if (isLoading) {
-        console.log('Fetch aborted: already loading.');
-        return; // Prevent multiple concurrent fetches
-      }
-      if (!hasMoreData && !isInitialOrRefresh) {
-          console.log('No more data to load.');
-          return; // Prevent fetching if already reached the end on pagination
-      }
-
-      console.log('Fetching with params:', JSON.stringify(currentParams, null, 2)); // Detailed logging
-
-      setIsLoading(true);
-      setFetchError(null); // Clear previous errors
-
-      try {
-        const response = await fetch(API_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(currentParams),
-        });
-
-        // Always try to read response as text first for better debugging,
-        // especially when API sends non-JSON errors.
-        const responseText = await response.text();
-
-        if (!response.ok) {
-          console.error('API Error Response (raw text):', responseText);
-          throw new Error(`HTTP error ${response.status}: ${responseText}`);
-        }
-
-        let json;
-        try {
-          json = JSON.parse(responseText); // Attempt to parse as JSON
-        } catch (parseError) {
-          console.error('JSON Parse Error:', parseError);
-          throw new Error(`Invalid JSON response from API: ${responseText.substring(0, 100)}...`);
-        }
-
-        const newItems = json?.xchange || [];
-        console.log(`Received ${newItems.length} items from API.`);
-
-        setData(prevData => {
-          if (isInitialOrRefresh) {
-            return newItems; // Replace data on initial load or refresh
-          } else {
-            const uniqueNewItems = newItems.filter(
-                newItem => !prevData.some(existingItem => existingItem.listing_id === newItem.listing_id)
-            );
-            return [...prevData, ...uniqueNewItems];
-          }
-        });
-
-        if (newItems.length > 0) {
-          const lastId = String(newItems[newItems.length - 1].listing_id);
-          if (lastId !== currentParams.last_listing_id) {
-            setApiParams(prev => ({
-              ...prev,
-              last_listing_id: lastId,
-              // Update last_row_value if your API uses it for pagination
-              // last_row_value: String(newItems[newItems.length - 1].some_other_value)
-            }));
-          }
-          setHasMoreData(newItems.length === currentParams.limit); // More data if we got 'limit' items
-        } else {
-          setHasMoreData(false); // No more data to load
-        }
-
-      } catch (err) {
-        console.error('Fetch operation failed:', err);
-        setFetchError(err.message || 'An unexpected error occurred.');
-        Alert.alert('Error', err.message || 'Failed to load data. Please try again.');
-      } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
-      }
-    },
-    [isLoading, hasMoreData] // Depend on these states to control flow
-  );
-
-  // --- Effect for Route Params (Drawer Filters) ---
-useEffect(() => {
-  if (route.params && Object.keys(route.params).length > 0) {
-    const { category, min, max, sort } = route.params;
-
-    const updatedParams = {
-      ...INITIAL_API_PARAMS,
-      token: apiParams.token,
-      user_type: apiParams.user_type,
-      version_number: apiParams.version_number,
-      limit: apiParams.limit,
-      search: searchText,
-      categories: category && category !== 'default' ? [category] : [],
-      min: min ? String(min) : '',
-      max: max ? String(max) : '',
-      sort: sort || '',
-      last_listing_id: '',
-      last_row_value: '',
-    };
-
-    // 💡 Only update if params actually changed
-    setApiParams(prev => {
-      const prevString = JSON.stringify(prev);
-      const nextString = JSON.stringify(updatedParams);
-      if (prevString !== nextString) return updatedParams;
-      return prev;
-    });
-
-    setData([]);
-    setHasMoreData(true);
-  }
-}, [route.params, searchText]);
+const ProductSkeleton = () => {
+  const pulseAnim = new Animated.Value(0);
 
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: false,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: false,
+        }),
+      ]),
+    ).start();
 
-    fetchData(apiParams, apiParams.last_listing_id === ''); // `true` for initial/new filter fetch
-  }, [apiParams, fetchData]);
+    return () => pulseAnim.stopAnimation();
+  }, []);
 
-  const handleSearchChange = text => setSearchText(text);
-
-  const submitSearch = () => {
-    setApiParams(prev => ({
-      ...INITIAL_API_PARAMS, 
-      token: prev.token,
-      user_type: prev.user_type,
-      version_number: prev.version_number,
-      limit: prev.limit,
-
-      search: searchText, 
-      categories: prev.categories, 
-      sort: prev.sort,
-      min: prev.min, 
-      max: prev.max, 
-      last_listing_id: '',
-      last_row_value: '',
-    }));
-    setData([]); // Clear current data
-    setHasMoreData(true); // Assume there's more data for a new search
-  };
-
-  // --- Pull-to-refresh Handler ---
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    setApiParams(prev => ({
-      ...INITIAL_API_PARAMS, // Start fresh
-      token: prev.token,
-      user_type: prev.user_type,
-      version_number: prev.version_number,
-      limit: prev.limit,
-
-      search: searchText, // Retain current search text
-      categories: prev.categories, // Retain existing category filter
-      sort: prev.sort, // Retain existing sort order
-      min: prev.min, // Retain existing min price
-      max: prev.max, // Retain existing max price
-
-      // Reset pagination
-      last_listing_id: '',
-      last_row_value: '',
-    }));
-    setData([]); // Clear data to show fresh results
-    setHasMoreData(true); // Assume there's more data for refresh
-  };
-
-  // --- Pagination: Load More Data ---
-const handleLoadMore = () => {
-  if (!isLoading && data.length > 0 && hasMoreData) {
-    console.log('Attempting to load more...');
-    fetchData(apiParams, false); // Trigger fetch for next batch (pagination)
-  }
-};
-
-const SkeletonItem = () => (
-  <View style={[mainStyles.item, { opacity: 0.5 }]}>
-    <View style={[mainStyles.imageContainer, { backgroundColor: '#ccc' }]} />
-    <View style={{ height: 20, backgroundColor: '#ddd', marginTop: 8, borderRadius: 4 }} />
-    <View style={{ height: 14, width: '60%', backgroundColor: '#eee', marginTop: 4, borderRadius: 4 }} />
-    <View style={{ height: 20, backgroundColor: '#ddd', marginTop: 8, borderRadius: 4 }} />
-    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
-      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#ccc' }} />
-      <View style={{ height: 14, width: '50%', backgroundColor: '#eee', marginLeft: 8, borderRadius: 4 }} />
-    </View>
-  </View>
-);
-
-
-  // --- Render Item for FlatList ---
-const renderItem = ({ item }) => {
-  if (!item || typeof item !== 'object') return null;
-
-  const {
-    item_image,
-    model = 'Unknown Model',
-    category = 'Unknown Category',
-    selling_price,
-    lister_image,
-    lister_name = 'Unknown Lister',
-  } = item;
+  const backgroundColor = pulseAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#e1e1e1', '#f0f0f0'],
+  });
 
   return (
-    <View style={mainStyles.item}>
-      <TouchableOpacity
-        onPress={() => navigation.navigate('ProductDetailScreen', { item })}
-        style={mainStyles.itemTouchable}
-        activeOpacity={0.8}
-      >
-        <View style={mainStyles.imageContainer}>
-          {item_image ? (
-            <Image
-              source={{ uri: item_image }}
-              style={mainStyles.image}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.noImagePlaceholder}>
-              <Text style={styles.noImageText}>No Image</Text>
+    <View style={styles.productContainer}>
+      <Animated.View
+        style={[styles.productImage, styles.skeleton, {backgroundColor}]}
+      />
+      <Animated.View
+        style={[
+          styles.productName,
+          styles.skeleton,
+          {width: '70%', height: 20},
+          {backgroundColor},
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.productPrice,
+          styles.skeleton,
+          {width: '40%', height: 18},
+          {backgroundColor},
+        ]}
+      />
+      <Animated.View
+        style={[
+          styles.productDescription,
+          styles.skeleton,
+          {height: 16},
+          {backgroundColor},
+        ]}
+      />
+      <View style={styles.sellerContainer}>
+        <Animated.View
+          style={[styles.sellerImage, styles.skeleton, {backgroundColor}]}
+        />
+        <Animated.View
+          style={[
+            styles.sellerName,
+            styles.skeleton,
+            {width: '60%', height: 16},
+            {backgroundColor},
+          ]}
+        />
+      </View>
+    </View>
+  );
+};
+
+
+const FilterModal = ({
+  visible,
+  onClose,
+  categories,
+  selectedCategories,
+  toggleCategory,
+  priceRange,
+  setPriceRange,
+  sortOrder,
+  setSortOrder,
+  applyFilters,
+  clearFilters,
+}) => {
+  const [slideAnim] = useState(new Animated.Value(Dimensions.get('window').width));
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [localSelectedCategory, setLocalSelectedCategory] = useState('');
+
+  const priceRanges = [
+    {label: '1 - 5k', min: 1, max: 5000},
+    {label: '5k - 10k', min: 5000, max: 10000},
+    {label: '10k - 50k', min: 10000, max: 50000},
+    {label: '50k+', min: 50000, max: null},
+  ];
+
+  useEffect(() => {
+    if (visible) {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: Dimensions.get('window').width,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible]);
+
+  const handleCategorySelect = (category) => {
+    setLocalSelectedCategory(category);
+    setShowCategoryDropdown(false);
+    toggleCategory(category); 
+  };
+
+  const chunkArray = (arr, size) => {
+  const result = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+};
+
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="none"
+      transparent={true}
+      onRequestClose={onClose}>
+      <Animated.View
+        style={[
+          styles.modalContainer,
+          {
+            transform: [{translateX: slideAnim}],
+            width: '80%',
+            marginLeft: '20%',
+            shadowColor: '#000',
+            shadowOffset: {width: -2, height: 0},
+            shadowOpacity: 0.2,
+            shadowRadius: 5,
+            elevation: 10,
+          },
+        ]}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Sort</Text>
+          <TouchableOpacity onPress={onClose}>
+            <Text style={styles.closeButton}>×</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView>
+          {/* Category Dropdown Section */}
+          <View style={styles.filterSection}>
+            <Text style={styles.sectionTitle}>Category</Text>
+            <TouchableOpacity
+              style={styles.categoryDropdownButton}
+              onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}>
+              <Text style={styles.categoryDropdownText}>
+                {localSelectedCategory || 'Select Category'}
+              </Text>
+            </TouchableOpacity>
+
+            {showCategoryDropdown && (
+              <View style={styles.categoryDropdownList}>
+                <ScrollView nestedScrollEnabled={true} style={{maxHeight: 150}}>
+                  {categories.map(category => (
+                    <TouchableOpacity
+                      key={category}
+                      style={[
+                        styles.categoryDropdownItem,
+                        selectedCategories.includes(category) &&
+                          styles.selectedCategory,
+                      ]}
+                      onPress={() => handleCategorySelect(category)}>
+                      <Text
+                        style={
+                          selectedCategories.includes(category)
+                            ? styles.selectedCategoryText
+                            : styles.categoryText
+                        }>
+                        {category}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          {/* Sort Section */}
+          <View style={styles.filterSection}>
+            <Text style={styles.sectionTitle}>Sort</Text>
+            <View style={styles.sortOptions}>
+              <TouchableOpacity
+                style={[
+                  styles.sortButton,
+                  sortOrder === 'ASC' && styles.activeSort,
+                ]}
+                onPress={() => setSortOrder('ASC')}>
+                <Text
+                  style={
+                    sortOrder === 'ASC'
+                      ? styles.activeSortText
+                      : styles.sortText
+                  }>
+                  ASC
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.sortButton,
+                  sortOrder === 'DESC' && styles.activeSort,
+                ]}
+                onPress={() => setSortOrder('DESC')}>
+                <Text
+                  style={
+                    sortOrder === 'DESC'
+                      ? styles.activeSortText
+                      : styles.sortText
+                  }>
+                  DESC
+                </Text>
+              </TouchableOpacity>
             </View>
-          )}
-        </View>
+          </View>
 
-        <View style={mainStyles.titleCategoryRow}>
-          <Text style={mainStyles.title} numberOfLines={1} ellipsizeMode="tail">
-            {model}
-          </Text>
-          <Text style={mainStyles.category}>
-            {category}
-          </Text>
-        </View>
+            {/* Filter by Category Section */}
+     <View style={styles.filterSection}>
+  <Text style={styles.sectionTitle}>Filter by Category</Text>
+  {chunkArray(categories, 2).map((row, rowIndex) => (
+    <View key={rowIndex} style={styles.categoryRow}>
+      {row.map((category, index) => {
+        const isSelected = selectedCategories.includes(category);
+        return (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.filterbutton,
+              isSelected && styles.selectedFilterButton,
+            ]}
+            onPress={() => toggleCategory(category)}
+          >
+            <Text
+              style={[
+                styles.filterbuttonText,
+                isSelected && styles.selectedFilterText,
+              ]}
+            >
+              {category}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  ))}
+</View>
 
-        <Text style={mainStyles.price}>
-          {selling_price != null ? `HKD ${selling_price}.00` : 'Price not available'}
+
+          <View style={styles.filterSection}>
+            <Text style={styles.sectionTitle}>Value Range</Text>
+            <View style={styles.priceInputContainer}>
+              <TextInput
+                style={[styles.priceInput, {flex: 1}]}
+                placeholder="Min"
+                keyboardType="numeric"
+                value={priceRange.min}
+                onChangeText={text =>
+                  setPriceRange({...priceRange, min: text})
+                }
+              />
+              <Text style={styles.priceRangeSeparator}>-</Text>
+              <TextInput
+                style={[styles.priceInput, {flex: 1}]}
+                placeholder="Max"
+                keyboardType="numeric"
+                value={priceRange.max}
+                onChangeText={text =>
+                  setPriceRange({...priceRange, max: text})
+                }
+              />
+            </View>
+            <View style={styles.priceRangeContainer}>
+              {priceRanges.map(range => (
+                <TouchableOpacity
+                  key={range.label}
+                  style={[
+                    styles.priceRangeButton,
+                    priceRange.min === range.min &&
+                      priceRange.max === range.max &&
+                      styles.selectedCategory,
+                  ]}
+                  onPress={() =>
+                    setPriceRange({min: range.min, max: range.max})
+                  }>
+                  <Text
+                    style={
+                      priceRange.min === range.min &&
+                      priceRange.max === range.max
+                        ? styles.selectedCategoryText
+                        : styles.priceRangeText
+                    }>
+                    {range.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+
+        <View style={styles.filterActions}>
+          <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
+            <Text style={styles.clearButtonText}>Clear</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.applyButton} onPress={applyFilters}>
+            <Text style={styles.applyButtonText}>Apply</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </Modal>
+  );
+};
+
+const BrowseProducts = () => {
+  const navigation = useNavigation();
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+  const [lastListingId, setLastListingId] = useState('');
+  const [hasMore, setHasMore] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [priceRange, setPriceRange] = useState({min: '', max: ''});
+  const [sortOrder, setSortOrder] = useState('');
+  const [showInput, setShowInput] = useState(false);
+
+  //search
+  const [query, setQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+
+  const categories = [
+    'Bags',
+    'Shoes',
+    'Jewelry',
+    'Toys',
+    'Watches',
+    'Automatic and Parts',
+    'Electronics and Gadgets',
+    'Clothing',
+    'Eyewear',
+    'Musical Instrument',
+    'Trading Cards',
+    'Artworks',
+    'Rare Coins',
+    'Books and Comic Books',
+    'Stamps',
+    'Antiques',
+    'Music',
+    'Movie',
+    'Sports',
+    'Others',
+  ];
+
+  const toggleCategory = category => {
+    setSelectedCategories(prev =>
+      prev.includes(category)
+        ? prev.filter(c => c !== category)
+        : [...prev, category],
+    );
+  };
+    const applyFilters = () => {
+      setShowFilterModal(false);
+      setShowSkeleton(true);
+      setLastListingId('');
+      setHasMore(true);
+
+      fetchProducts(false, {
+        selectedCategories,
+        priceRange,
+        sortOrder,
+      });
+  };
+
+
+  const clearFilters = () => {
+    setSelectedCategories([]);
+    setPriceRange({min: '', max: ''});
+    setSortOrder('');
+  };
+
+  const fetchProducts = async (loadMore = false, filters = {}) => {
+    if ((isLoading && !loadMore) || (loadMore && !hasMore)) return;
+
+    loadMore ? setIsLoadingMore(true) : setIsLoading(true);
+    setError(null);
+
+    try {
+    const response = await axios.post(API_ENDPOINT, {
+        ...API_PARAMS,
+        last_listing_id: loadMore ? lastListingId : '',
+        categories: filters.selectedCategories || selectedCategories,
+        min: filters.priceRange?.min ?? priceRange.min,
+        max: filters.priceRange?.max ?? priceRange.max,
+        sort: filters.sortOrder || sortOrder,
+         search: filters.searchQuery ?? searchQuery, 
+      });
+
+
+      if (response.status === 200) {
+         console.log('API response:', response.data);
+        if (
+          response.data &&
+          response.data.xchange &&
+          Array.isArray(response.data.xchange)
+        ) {
+          setProducts(prevProducts =>
+            loadMore
+              ? [...prevProducts, ...response.data.xchange]
+              : response.data.xchange,
+          );
+
+          if (response.data.xchange.length > 0) {
+            setLastListingId(
+              response.data.xchange[response.data.xchange.length - 1]
+                .listing_id,
+            );
+          }
+
+          setHasMore(response.data.xchange.length > 0);
+        } else if (
+          typeof response.data === 'string' &&
+          (response.data.includes('Account is suspended') ||
+            response.data.includes('Account is deleted') ||
+            response.data.includes('Version not compatible') ||
+            response.data.includes('IDX12741'))
+        ) {
+          setError(response.data);
+          Alert.alert(
+            'Error',
+            `${response.data}. You will now be logged out of this app.`,
+          );
+          setProducts([]);
+        } else {
+          setError('Invalid response format from server');
+          setProducts([]);
+        }
+      } else {
+        setError('Failed to fetch products');
+        setProducts([]);
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred while fetching products');
+      setProducts([]);
+      console.error('API error:', err);
+    } finally {
+      loadMore ? setIsLoadingMore(false) : setIsLoading(false);
+      setIsRefreshing(false);
+      setShowSkeleton(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setShowSkeleton(true);
+    setLastListingId('');
+    setHasMore(true);
+    fetchProducts();
+  };
+
+ const handleSearch = () => {
+  setLastListingId('');  
+  setHasMore(true);
+  fetchProducts(false, { searchQuery: query }); 
+  setShowInput(false);  
+};
+
+  useEffect(() => {
+    setShowSkeleton(true);
+    fetchProducts();
+  }, []);
+
+  //Instant Search
+  useEffect(() => {
+  const handler = setTimeout(() => {
+    setDebouncedQuery(query);
+  }, 500); 
+
+  return () => {
+    clearTimeout(handler); 
+  };
+}, [query]);
+
+useEffect(() => {
+  setLastListingId('');
+  setHasMore(true);
+  fetchProducts(false, { searchQuery: debouncedQuery });
+}, [debouncedQuery]);
+
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMore && products.length > 0) {
+      fetchProducts(true);
+    }
+  };
+
+  const renderFooter = () => {
+    if (!hasMore && products.length > 0) {
+      return (
+        <View style={styles.footer}>
+          <Text>No more products to load</Text>
+        </View>
+      );
+    }
+    return isLoadingMore ? (
+      <View style={styles.footer}>
+        <ActivityIndicator size="small" color="#6200ee" />
+      </View>
+    ) : null;
+  };
+
+
+  const renderProduct = ({item}) => {
+    console.log('Product Item Parameters:', JSON.stringify(item, null, 2));
+    return (
+      <TouchableOpacity
+        style={styles.productContainer}
+        onPress={() => navigation.navigate('ProductDetailScreen', {item: item})}>
+        <Image
+          source={{uri: item.item_image || 'https://picsum.photos/300/300'}}
+          style={styles.productImage}
+          resizeMode="cover"
+        />
+        <Text style={styles.productPrice}>HKD {item.selling_price || '0'}.00</Text>
+        <Text style={styles.productName}>
+          {item.model || item.brand || 'No Name'}
         </Text>
-
-        <View style={mainStyles.listerInfo}>
-          {lister_image ? (
+        <View style={styles.sellerContainer}>
+          {item.lister_image ? (
             <Image
-              source={{ uri: lister_image }}
-              style={mainStyles.listerImage}
-              resizeMode="cover"
+              source={{uri: item.lister_image}}
+              style={styles.sellerImage}
             />
-          ) : (
-            <Ionicons name="person-circle" size={24} color="#555" style={styles.listerImagePlaceholder} />
-          )}
-          <Text style={mainStyles.listerName}>
-            {lister_name}
+          ) : null}
+          <Text style={styles.sellerName} numberOfLines={1}>
+            {item.lister_name || 'Unknown seller'}
           </Text>
         </View>
       </TouchableOpacity>
-    </View>
-  );
-};
+    );
+  };
 
-  // --- Key Extractor for FlatList ---
-  const keyExtractor = item => String(item.listing_id || Math.random()); // Ensure unique string key
+  if (error) {
+    return (
+      <View
+        style={[
+          styles.container,
+          {justifyContent: 'center', alignItems: 'center'},
+        ]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
-  // --- Main Component Render ---
   return (
-    <View style={mainStyles.container}>
-      {/* Error display */}
-      {fetchError && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Error: {fetchError}</Text>
-          <TouchableOpacity onPress={() => handleRefresh()} style={styles.retryButton}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Header Section */}
-      <View style={mainStyles.header}>
-        {/* <Image
-          source={require('../assets/cute.png')}
-          style={mainStyles.headerImage}
-        /> */}
-        <View style={mainStyles.overlay}>
-          {/* <Image
-            source={require('../assets/popmartlogo.png')}
-            style={mainStyles.logo}
-          /> */}
-          <Text  style={mainStyles.logo}>The Xchange</Text>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>The XChange</Text>
+        <View style={styles.notificationContainer}>
           <Ionicons
             name="notifications-outline"
             size={24}
             color="white"
-            style={mainStyles.bellIcon}
+            style={styles.bellIcon}
           />
+
+          <View style={styles.notificationDot} />
         </View>
-        {/* <View style={mainStyles.headerTextContainer}>
-          <Text style={mainStyles.headerText}>New Release</Text>
-          <Text style={mainStyles.headerText1}>DIMOO</Text>
-        </View> */}
       </View>
 
-      {/* Search Bar */}
-      <View style={mainStyles.searchBar}>
-        {/* <Ionicons name="search" size={20} color="#000" /> */}
-        <TextInput
-          style={mainStyles.searchInput}
-          placeholder="Tell us what you're looking for"
-          value={searchText}
-          onChangeText={handleSearchChange}
-          onSubmitEditing={submitSearch}
-          returnKeyType="search"
-          clearButtonMode="while-editing"
-        />
-      </View>
+        {showInput ? (
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search for something..."
+            value={query}
+            onChangeText={setQuery}
+            autoFocus
+            onSubmitEditing={() => {
+              handleSearch();
+              setShowInput(false); // close input after search
+            }}
+            returnKeyType="search"
+          />
+        ) : (
+          <TouchableOpacity style={styles.searchBar} onPress={() => setShowInput(true)}>
+            <Text style={styles.searchText}>
+              {query.trim() === '' ? "Tell us what you're looking for." : query}
+            </Text>
+          </TouchableOpacity>
+        )}
 
-      {/* Daily Discovery Label & Filter Icon */}
-      <View style={mainStyles.labelRow}>
-        <Text style={mainStyles.label}>Daily Discovery</Text>
-        <Ionicons
+      <View style={styles.discoveryHeader}>
+        <Text style={styles.discoveryText}>Daily Discovery</Text>
+        <TouchableOpacity
+          style={styles.filterText}
+          onPress={() => setShowFilterModal(true)}>
+          <Text style={styles.filterTextContent}>Filter</Text>
+          <Ionicons
           name="filter"
           size={24}
           color="#000"
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-    style={{ padding: 8 }} // Adjust -5 to whatever value looks good
+    style={{ padding: 8, color: '#cbb186' }} 
         />
+
+        </TouchableOpacity>
       </View>
 
-      {/* Main Product List */}
-      {isLoading && data.length === 0 ? (
-  <FlatList
-    data={Array(apiParams.limit).fill(0)} // Show placeholders equal to page size
-    keyExtractor={(_, index) => `skeleton-${index}`}
-    renderItem={() => <SkeletonItem />}
-    numColumns={2}
-    scrollEnabled={false} // Optional: disable scroll on skeleton
-    style={mainStyles.arrivalsList}
-        contentContainerStyle={mainStyles.flatListContentContainer} // <-- ADD THIS
+      {showSkeleton || isLoading ? (
+        <FlatList
+          data={[1, 2, 3, 4, 5, 6]}
+          renderItem={() => <ProductSkeleton />}
+          keyExtractor={item => item.toString()}
+          numColumns={2}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={['#6200ee']}
+              tintColor="#6200ee"
+            />
+          }
+        />
+      ) : (
+        <FlatList
+          data={products}
+          renderItem={renderProduct}
+          keyExtractor={item =>
+            item.listing_id
+              ? item.listing_id.toString()
+              : Math.random().toString()
+          }
+          numColumns={2}
+          contentContainerStyle={styles.listContent}
+          ListFooterComponent={renderFooter}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={['#6200ee']}
+              tintColor="#6200ee"
+            />
+          }
+        />
+      )}
 
-  />
-) : (
-  <FlatList
-    data={data}
-    keyExtractor={keyExtractor}
-    renderItem={renderItem}
-    onEndReached={handleLoadMore}
-    onEndReachedThreshold={0.5}
-    numColumns={2}
-    refreshControl={
-      <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-    }
-    ListFooterComponent={
-      isLoading && data.length > 0 ? (
-        <View style={mainStyles.loaderContainer}>
-          <ActivityIndicator size="large" color="#ac895c" />
-        </View>
-      ) : null
-    }
-    style={mainStyles.arrivalsList}
-    // ListEmptyComponent={
-    //   !isLoading && data.length === 0 && !fetchError ? (
-    //     <View style={styles.emptyListContainer}>
-    //       <Text style={styles.emptyListText}>No products found matching your criteria.</Text>
-    //     </View>
-    //   ) : null
-    // }
-  />
-)}
+      <FilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        categories={categories}
+        selectedCategories={selectedCategories}
+        toggleCategory={toggleCategory}
+        priceRange={priceRange}
+        setPriceRange={setPriceRange}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
+        applyFilters={applyFilters}
+        clearFilters={clearFilters}
+      />
+      {/* <BottomNavigationBar /> */}
       <BottomNav />
     </View>
   );
 };
 
-// New styles for placeholders and error display
-const styles = StyleSheet.create({
-  noImagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8, // Match mainStyles.image border-radius if present
-  },
-  noImageText: {
-    color: '#888',
-    fontSize: 14,
-  },
-  listerImagePlaceholder: {
-    // Inherits default Ionicons size/color, adjust if needed
-    marginRight: 5,
-  },
-  emptyListContainer: {
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1, // Take full height if possible
-  },
-  emptyListText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#555',
-  },
-  errorContainer: {
-    padding: 15,
-    backgroundColor: '#ffebee', // Light red background
-    borderBottomWidth: 1,
-    borderColor: '#ef9a9a', // Darker red border
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 5,
-  },
-  errorText: {
-    color: '#d32f2f', // Dark red text
-    textAlign: 'center',
-    marginBottom: 10,
-    fontSize: 15,
-  },
-  retryButton: {
-    backgroundColor: '#d32f2f',
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 5,
-  },
-  retryButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-});
-
-export default HomeScreen;
+export default BrowseProducts;

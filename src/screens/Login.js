@@ -364,7 +364,7 @@ accountWrapper: {
   borderTopColor: '#eee',
   width: '90%',
   maxWidth: 400,
-  alignSelf: 'center', // ensures it's centered even with width set
+  alignSelf: 'center', 
 },
 
 createAccountButton: {
