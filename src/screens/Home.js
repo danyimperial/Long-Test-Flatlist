@@ -717,7 +717,6 @@ useEffect(() => {
         applyFilters={applyFilters}
         clearFilters={clearFilters}
       />
-      {/* <BottomNavigationBar /> */}
       <BottomNav />
     </View>
   );

@@ -39,13 +39,12 @@ const MessageModal = ({ visible, message, onClose }) => {
   );
 };
 
-// Styles for the Message Modal
 const modalStyles = StyleSheet.create({
   centeredView: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)', // Semi-transparent dark background for modal
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalView: {
     margin: 20,
@@ -61,8 +60,8 @@ const modalStyles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-    width: width * 0.8, // Modal width is 80% of screen width
-    maxWidth: 400,      // Maximum width for larger screens
+    width: width * 0.8, 
+    maxWidth: 400,      
   },
   modalText: {
     marginBottom: 15,
@@ -71,7 +70,7 @@ const modalStyles = StyleSheet.create({
     fontWeight: '500',
   },
   buttonClose: {
-    backgroundColor: '#59238c', // Purple button background
+    backgroundColor: '#59238c', 
     borderRadius: 20,
     padding: 10,
     elevation: 2,
@@ -147,26 +146,24 @@ const SignInScreen = ({ navigation }) => {
         data = JSON.parse(text);
       } catch (e) {
         console.error('JSON parse error:', e.message);
-        showMessage('Invalid server response'); // Using custom modal instead of Alert.alert
+        showMessage('Invalid server response'); 
         return;
       }
 
       const token = data?.XpertData?.[0]?.token;
 
       if (token) {
-        // Simulate a brief delay before navigating to ensure overlay is seen
         setTimeout(() => {
-          navigation.navigate('Home', { token }); // Use navigation.navigate as requested
-          // No need to hide isLoading here as navigation will unmount this component
-          fadeAnim.setValue(0); // Reset animation value for potential re-mount
-        }, 500); // 500ms delay
+          navigation.navigate('Home', { token }); 
+          fadeAnim.setValue(0); 
+        }, 500); 
       } else {
-        showMessage('Login failed: Token not found.'); // Using custom modal instead of Alert.alert
+        showMessage('Login failed: Token not found.'); 
       }
 
     } catch (error) {
       console.error('Login error:', error);
-      showMessage('Login Error: An error occurred during login.'); // Using custom modal instead of Alert.alert
+      showMessage('Login Error: An error occurred during login.'); 
     } finally {
 
       Animated.timing(fadeAnim, {
@@ -274,12 +271,12 @@ const splashStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a', // Dark background for splash screen
+    backgroundColor: '#1a1a1a', 
   },
   logo: {
     fontSize: 50,
     fontWeight: 'bold',
-    color: '#C89B5D', // Amber-like color
+    color: '#C89B5D', 
     marginBottom: 20,
   },
   spinner: {
@@ -294,7 +291,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#f0f2f5', // Light background for the sign-in screen
+    backgroundColor: '#f0f2f5', 
   },
   logo: {
     margin: 50,
@@ -310,8 +307,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   inputWrapper: {
-    width: '90%', // Use percentage for responsiveness
-    maxWidth: 400, // Max width for larger screens
+    width: '90%', 
+    maxWidth: 400, 
   },
   input: {
     width: '100%',
@@ -387,26 +384,25 @@ createAccountText: {
 
   // Styles for the post-login loading overlay
   loadingOverlay: {
-    position: 'absolute', // Position absolutely to cover the entire screen
+    position: 'absolute', 
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.7)', // Transparent dark background
+    backgroundColor: 'rgba(0,0,0,0.7)', 
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000, // Ensure it's on top of other content
+    zIndex: 1000, 
   },
   loadingContent: {
     alignItems: 'center',
     padding: 20,
     borderRadius: 10,
-    // No background color here, as the overlay itself provides the dark background
   },
   loadingLogo: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#C89B5D', // Amber-like color for the logo
+    color: '#C89B5D', 
     marginBottom: 20,
   },
  passwordWrapper: { 
@@ -427,7 +423,7 @@ passwordInput: {
   shadowOpacity: 0.1,
   shadowRadius: 2,
   elevation: 2,
-  paddingRight: 50, // Space for eye icon
+  paddingRight: 50, 
 },
 eyeIcon: {
   position: 'absolute',
@@ -439,4 +435,4 @@ eyeIcon: {
 
 });
 
-export default SignInScreen; // Export SignInScreen directly
+export default SignInScreen; 

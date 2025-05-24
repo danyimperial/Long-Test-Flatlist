@@ -163,7 +163,7 @@ sectionHeader: {
   flexDirection: 'row',
   justifyContent: 'space-between',
   alignItems: 'center',
-  paddingHorizontal: 12, // Add this line to give left/right spacing
+  paddingHorizontal: 12, 
   paddingVertical: 8,
 },
 
@@ -182,8 +182,8 @@ chevronIcon: {
     padding: 12,
     borderRadius: 8,
     marginTop: 6,
-    elevation: 3, // Android shadow
-    shadowColor: '#000', // iOS shadow
+    elevation: 3, 
+    shadowColor: '#000', 
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
